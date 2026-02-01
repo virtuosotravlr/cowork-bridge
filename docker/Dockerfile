@@ -25,7 +25,7 @@ RUN chmod +x /app/watcher.sh
 RUN mkdir -p /bridge
 
 # Environment variables (override at runtime)
-ENV ANTHROPIC_API_KEY=""
+# Note: ANTHROPIC_API_KEY should be passed at runtime, not in Dockerfile
 ENV BRIDGE_DIR="/bridge"
 ENV POLL_INTERVAL="1"
 ENV LOG_LEVEL="info"

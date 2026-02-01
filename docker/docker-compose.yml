@@ -1,0 +1,52 @@
+# Cowork CLI Bridge - Docker Compose
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in your values
+#   2. Run: docker compose up -d
+#   3. View logs: docker compose logs -f
+#
+# The container will watch for requests in the mounted bridge folder
+# and process them with full network/docker access.
+
+services:
+  cli-bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cowork-cli-bridge
+    restart: unless-stopped
+
+    # Environment variables
+    env_file:
+      - .env
+
+    environment:
+      - BRIDGE_DIR=/bridge
+      - POLL_INTERVAL=${POLL_INTERVAL:-1}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+    # Mount the bridge folder from the Cowork session
+    # Update SESSION_PATH in .env to match your active session
+    volumes:
+      # Bridge folder (request/response queue)
+      - ${SESSION_PATH}/outputs/.bridge:/bridge
+
+      # Optional: Mount host docker socket for docker-in-docker
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Optional: Mount additional host folders for file access
+      # - ${HOME}/projects:/host/projects:ro
+      # - ${HOME}/Documents:/host/documents:ro
+
+    # Full network access (no restrictions)
+    network_mode: bridge
+
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Note: Auto-discovery service removed - use local auto-setup-daemon.sh instead
+  # or manually update SESSION_PATH in .env when switching sessions

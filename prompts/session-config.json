@@ -1,0 +1,40 @@
+{
+  "_comment": "Full session configuration template for power users",
+  "_usage": "Merge these fields into cowork_settings.json in your session directory",
+
+  "model": "claude-opus-4-5-20251101",
+  "_model_options": [
+    "claude-opus-4-5-20251101",
+    "claude-sonnet-4-5-20250929",
+    "claude-haiku-4-5-20251001"
+  ],
+
+  "slashCommands": [
+    "keybindings-help",
+    "anthropic-skills:xlsx",
+    "anthropic-skills:pdf",
+    "anthropic-skills:skill-creator",
+    "anthropic-skills:pptx",
+    "anthropic-skills:docx",
+    "compact",
+    "context",
+    "cost",
+    "init",
+    "pr-comments",
+    "release-notes",
+    "review",
+    "security-review"
+  ],
+  "_slashCommands_note": "Add custom slash commands here - they map to skills",
+
+  "userSelectedFolders": [],
+  "_userSelectedFolders_note": "Pre-mount folders: ['/Users/you/projects', '/Users/you/Documents']",
+
+  "userApprovedFileAccessPaths": [],
+  "_userApprovedFileAccessPaths_note": "Pre-approve file access to skip permission prompts",
+
+  "enabledMcpTools": {},
+  "_enabledMcpTools_note": "Set tool-hash: true/false to enable/disable specific MCP tools",
+
+  "systemPrompt": "YOUR_CUSTOM_PROMPT_HERE"
+}

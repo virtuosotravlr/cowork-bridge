@@ -1,0 +1,69 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Article (internal reference only - not for public release)
+article.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Planning documents (internal coordination)
+.plans/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build outputs
+dist/
+build/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Private keys and certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+
+# Session data (if any gets created)
+sessions/
+*.session
+
+# Bridge runtime files (if any)
+bridge.pid
+bridge.lock

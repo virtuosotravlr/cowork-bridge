@@ -16,7 +16,7 @@ echo ""
 
 # Find latest session
 find_latest_session() {
-  find "$CLAUDE_SESSIONS" -type d -name "local_*" -maxdepth 3 2>/dev/null | while read dir; do
+  find "$CLAUDE_SESSIONS" -type d -name "local_*" -maxdepth 3 2>/dev/null | while read -r dir; do
     if [ -d "$dir/.claude" ]; then
       stat -f "%m %N" "$dir" 2>/dev/null
     fi
@@ -37,7 +37,7 @@ echo ""
 # Check for API key
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   echo "Enter your Anthropic API key (or set ANTHROPIC_API_KEY env var):"
-  read -s API_KEY
+  read -rs API_KEY
   echo ""
 else
   API_KEY="$ANTHROPIC_API_KEY"
@@ -73,7 +73,7 @@ if [ ! -d "$BRIDGE_DIR" ]; then
   mkdir -p "$BRIDGE_DIR/responses"
   mkdir -p "$BRIDGE_DIR/streams"
   mkdir -p "$BRIDGE_DIR/logs"
-  echo '{"status": "ready", "initialized": "'$(date -Iseconds)'"}' > "$BRIDGE_DIR/status.json"
+  echo '{"status": "ready", "initialized": "'"$(date -Iseconds)"'"}' > "$BRIDGE_DIR/status.json"
   echo "  ✓ Created $BRIDGE_DIR"
   echo ""
 fi

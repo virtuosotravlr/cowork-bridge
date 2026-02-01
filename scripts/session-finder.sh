@@ -79,11 +79,13 @@ show_session_info() {
   echo "  Path: $SESSION_PATH"
   echo ""
   echo "  Structure:"
+  # shellcheck disable=SC2012 # ls output for human display
   ls -la "$SESSION_PATH" 2>/dev/null | sed 's/^/    /'
   echo ""
 
   if [ -d "$SESSION_PATH/.claude" ]; then
     echo "  .claude/ contents:"
+    # shellcheck disable=SC2012 # ls output for human display
     ls -la "$SESSION_PATH/.claude" 2>/dev/null | sed 's/^/    /'
     echo ""
   fi

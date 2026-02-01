@@ -140,8 +140,8 @@ process_request() {
     TIMEOUT="$MAX_TIMEOUT"
   fi
 
+  # shellcheck disable=SC2076 # We want literal match, not regex
   if [[ ! " ${ALLOWED_TYPES[*]} " =~ " ${TYPE} " ]]; then
-    # Note: SC2076 suggests removing quotes, but we need literal match here
     write_error_response "$JOB_ID" "Blocked request type: $TYPE"
     rm -f "$REQUEST_FILE"
     return

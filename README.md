@@ -1,10 +1,17 @@
 # Cowork Bridge
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![ShellCheck](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/shellcheck.yml)
+[![Docker Build](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/docker-build.yml/badge.svg)](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/docker-build.yml)
+[![GitHub issues](https://img.shields.io/github/issues/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/issues)
+[![GitHub last commit](https://img.shields.io/github/last-commit/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/commits/main)
+[![Platform](https://img.shields.io/badge/platform-macOS-blue)](https://github.com/virtuosotravlr/cowork-bridge)
+
 A file-based bridge between a sandboxed Cowork VM and an unrestricted Claude CLI running on your Mac (or in Docker).
 
 Cowork writes requests to a shared folder. A host-side watcher executes them with full host access and writes responses back.
 
-Not affiliated with Anthropic. Experimental; use at your own risk.
+> **Note:** Not affiliated with Anthropic. Experimental; use at your own risk.
 
 ## Docs
 
@@ -31,7 +38,7 @@ Not affiliated with Anthropic. Experimental; use at your own risk.
 ## Quick start (Docker, recommended)
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/virtuosotravlr/cowork-bridge.git
 cd cowork-bridge/docker
 
 # Auto-detect session, create .env
@@ -54,7 +61,7 @@ Prereqs (macOS host):
 - Claude CLI installed on the host
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/virtuosotravlr/cowork-bridge.git
 cd cowork-bridge
 ./scripts/install.sh --full
 ```

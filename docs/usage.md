@@ -26,8 +26,7 @@ See `docs/protocol-spec.md` for the full schema.
   "id": "job-001",
   "timestamp": "2026-02-01T03:14:15Z",
   "type": "exec",
-  "command": "bash",
-  "args": ["-lc", "curl -s https://api.example.com/data | jq ."],
+  "command": "curl -s https://api.example.com/data | jq .",
   "timeout": 30,
   "cwd": "~/projects/my-app"
 }

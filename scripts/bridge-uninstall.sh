@@ -188,7 +188,7 @@ uninstall_global() {
 
   # Remove CLI tools
   local BIN_DIR="$HOME/.local/bin"
-  for tool in cowork-session cowork-bridge-init cowork-bridge-uninstall; do
+  for tool in cowork-session cowork-bridge-init cowork-bridge-uninstall cowork-bridge-setup-all cowork-bridge-daemon cowork-inject-prompt cowork-session-config; do
     if [ -f "$BIN_DIR/$tool" ]; then
       if [ "$DRY_RUN" = "true" ]; then
         echo "[DRY RUN] Would remove: $BIN_DIR/$tool"

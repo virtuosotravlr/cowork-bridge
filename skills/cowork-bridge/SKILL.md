@@ -206,7 +206,7 @@ This writes to `settings.json` so the var is available in subsequent shell comma
 }
 ```
 
-Actions: `read`, `write`, `append`, `exists`, `list`
+Actions: `read`, `write`, `exists`, `list`
 
 ---
 

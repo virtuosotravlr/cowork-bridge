@@ -494,6 +494,12 @@ handle_prompt() {
 handle_env() {
   local REQUEST="$1"
 
+  # ENV requests not supported in Docker/direct bridge mode
+  if [ -z "$SESSION_PATH" ]; then
+    jq -n '{status: "failed", error: "ENV requests not supported in Docker mode - no session path available"}'
+    return
+  fi
+
   local KEY VALUE
   KEY=$(echo "$REQUEST" | jq -r '.key')
   VALUE=$(echo "$REQUEST" | jq -r '.value')

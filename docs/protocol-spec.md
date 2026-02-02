@@ -79,17 +79,9 @@ A bidirectional interop system that allows a sandboxed Cowork VM to request comm
   "id": "job-20260131-001",
   "timestamp": "2026-01-31T22:45:00Z",
   "type": "exec",
-  "command": "curl",
-  "args": ["-s", "https://api.example.com/data"],
+  "command": "curl -s https://api.example.com/data",
   "timeout": 30,
-  "env": {
-    "API_KEY": "$HOST_API_KEY"
-  },
   "cwd": "/path/on/host",
-  "callback": {
-    "type": "file",
-    "path": "responses/<job-id>.json"
-  },
   "metadata": {
     "requester": "cowork-session",
     "purpose": "fetch external API data"

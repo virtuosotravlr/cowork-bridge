@@ -39,8 +39,8 @@ These are **not** security boundaries—they're footgun prevention for common mi
 
 If you discover a security issue, please report it by:
 
-1. **Do not** open a public issue
-2. Email the maintainers directly (see repository contacts)
+1. **Do not** open a public issue for sensitive vulnerabilities
+2. Open a [GitHub issue](https://github.com/virtuosotravlr/cowork-bridge/issues) with the `security` label
 3. Include steps to reproduce and potential impact
 
 We will respond within 7 days and work with you on a fix.

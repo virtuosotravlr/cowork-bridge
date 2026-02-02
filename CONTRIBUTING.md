@@ -27,7 +27,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cowork-bridge.git
+git clone https://github.com/virtuosotravlr/cowork-bridge.git
 cd cowork-bridge
 
 # Make scripts executable
@@ -103,16 +103,14 @@ shellcheck scripts/*.sh skills/*/*.sh
 
 1. **Update documentation** if you change functionality
 2. **Add tests** if applicable
-3. **Update CHANGELOG.md** with your changes
-4. **Ensure ShellCheck passes** on all modified scripts
-5. **Request review** from maintainers
+3. **Ensure ShellCheck passes** on all modified scripts
+4. **Request review** from maintainers
 
 ### PR Checklist
 
 - [ ] Code follows the project style guidelines
 - [ ] ShellCheck passes without errors
 - [ ] Documentation updated (if applicable)
-- [ ] CHANGELOG.md updated
 - [ ] Tested locally
 
 ## Reporting Issues

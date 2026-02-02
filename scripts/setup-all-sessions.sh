@@ -104,7 +104,7 @@ EOF
   ACCOUNT_ID=$(basename "$(dirname "$(dirname "$SESSION_PATH")")")
 
   # Inject cowork-bridge skill into skills-plugin directory
-  local PLUGIN_BASE="$SKILLS_PLUGIN_DIR/$WORKSPACE_ID/$ACCOUNT_ID"
+  local PLUGIN_BASE="$SKILLS_PLUGIN_DIR/$WORKSPACE_ID/$ACCOUNT_ID/.claude-plugin"
   echo "$PLUGIN_BASE"
   local SKILL_TARGET="$PLUGIN_BASE/skills/cowork-bridge"
   local MANIFEST_FILE="$PLUGIN_BASE/manifest.json"

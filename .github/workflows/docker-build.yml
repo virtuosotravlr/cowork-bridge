@@ -16,4 +16,6 @@ jobs:
         run: docker build -t cowork-bridge:test -f docker/Dockerfile .
 
       - name: Validate docker-compose
-        run: docker compose -f docker/docker-compose.yml config
+        run: |
+          cp docker/.env.example docker/.env
+          docker compose -f docker/docker-compose.yml config

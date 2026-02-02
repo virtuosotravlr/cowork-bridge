@@ -5,7 +5,6 @@
 [![Docker Build](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/docker-build.yml/badge.svg)](https://github.com/virtuosotravlr/cowork-bridge/actions/workflows/docker-build.yml)
 [![GitHub issues](https://img.shields.io/github/issues/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/commits/main)
-[![Platform](https://img.shields.io/badge/platform-macOS-blue)](https://github.com/virtuosotravlr/cowork-bridge)
 
 A file-based bridge between a sandboxed Cowork VM and an unrestricted Claude CLI running on your Mac (or in Docker).
 

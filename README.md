@@ -6,6 +6,10 @@
 [![GitHub issues](https://img.shields.io/github/issues/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/commits/main)
 
+**Read the full writeup:** [Jailbreaking Claude Cowork: Escaping the Sandbox](https://dev.to/aaron_walker_dc0d1194638f/escaping-the-sandbox-jailbreaking-claude-cowork-dbd)
+
+---
+
 A file-based bridge between a sandboxed Cowork VM and an unrestricted Claude CLI running on your Mac (or in Docker).
 
 Cowork writes requests to a shared folder. A host-side watcher executes them with full host access and writes responses back.

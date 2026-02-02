@@ -6,6 +6,8 @@
 [![GitHub issues](https://img.shields.io/github/issues/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/virtuosotravlr/cowork-bridge)](https://github.com/virtuosotravlr/cowork-bridge/commits/main)
 
+[![Jailbreaking Claude Cowork](.github/social-preview.png)](https://dev.to/aaron_walker_dc0d1194638f/escaping-the-sandbox-jailbreaking-claude-cowork-dbd)
+
 **Read the full writeup:** [Jailbreaking Claude Cowork: Escaping the Sandbox](https://dev.to/aaron_walker_dc0d1194638f/escaping-the-sandbox-jailbreaking-claude-cowork-dbd)
 
 ---

@@ -17,7 +17,6 @@ Not affiliated with Anthropic. Experimental; use at your own risk.
 - [docs/scripts.md](docs/scripts.md)
 - [docs/docker.md](docs/docker.md)
 - [docs/security.md](docs/security.md)
-- [docs/article.md](docs/article.md)
 
 ## Features
 - HTTP requests to any endpoint

@@ -30,6 +30,9 @@ Thank you for your interest in contributing! This document provides guidelines f
 git clone https://github.com/virtuosotravlr/cowork-bridge.git
 cd cowork-bridge
 
+# Install dev dependencies (sets up git hooks)
+npm install
+
 # Make scripts executable
 chmod +x scripts/*.sh
 chmod +x skills/cli-bridge/*.sh
@@ -37,6 +40,16 @@ chmod +x skills/cli-bridge/*.sh
 # Run the installer
 ./scripts/install.sh
 ```
+
+### Git Hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) for git hooks. After running `npm install`, the following hooks are automatically set up:
+
+**pre-commit:**
+- Runs ShellCheck on staged `.sh` files
+- Validates docker-compose configuration if Docker files changed
+
+The hooks run automatically on commit. To skip hooks in emergencies: `git commit --no-verify`
 
 ## Code Style
 
@@ -103,14 +116,16 @@ shellcheck scripts/*.sh skills/*/*.sh
 
 1. **Update documentation** if you change functionality
 2. **Add tests** if applicable
-3. **Ensure ShellCheck passes** on all modified scripts
-4. **Request review** from maintainers
+3. **Update CHANGELOG.md** with your changes under `[Unreleased]`
+4. **Ensure ShellCheck passes** on all modified scripts
+5. **Request review** from maintainers
 
 ### PR Checklist
 
 - [ ] Code follows the project style guidelines
-- [ ] ShellCheck passes without errors
+- [ ] ShellCheck passes without errors (enforced by pre-commit hook)
 - [ ] Documentation updated (if applicable)
+- [ ] CHANGELOG.md updated
 - [ ] Tested locally
 
 ## Reporting Issues

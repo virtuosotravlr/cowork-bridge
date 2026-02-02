@@ -1,0 +1,45 @@
+#!/bin/sh
+
+echo "Running pre-commit checks..."
+
+# Check if shellcheck is installed
+if ! command -v shellcheck &> /dev/null; then
+  echo "Error: shellcheck is not installed. Install with: brew install shellcheck"
+  exit 1
+fi
+
+# Get list of staged .sh files
+STAGED_SH_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.sh$' || true)
+
+if [ -n "$STAGED_SH_FILES" ]; then
+  echo "Running shellcheck on staged shell scripts..."
+  echo "$STAGED_SH_FILES" | xargs shellcheck
+  if [ $? -ne 0 ]; then
+    echo "Shellcheck failed. Please fix the issues above."
+    exit 1
+  fi
+  echo "Shellcheck passed!"
+fi
+
+# Validate docker-compose if docker files changed
+STAGED_DOCKER_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^docker/' || true)
+
+if [ -n "$STAGED_DOCKER_FILES" ]; then
+  echo "Validating docker-compose..."
+  if [ -f docker/.env.example ]; then
+    cp docker/.env.example docker/.env 2>/dev/null || true
+  fi
+  if command -v docker &> /dev/null; then
+    docker compose -f docker/docker-compose.yml config > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+      echo "Docker compose validation failed."
+      exit 1
+    fi
+    echo "Docker compose validation passed!"
+  else
+    echo "Docker not installed, skipping compose validation."
+  fi
+  rm -f docker/.env 2>/dev/null || true
+fi
+
+echo "All pre-commit checks passed!"

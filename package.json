@@ -1,0 +1,32 @@
+{
+  "name": "cowork-bridge",
+  "version": "1.0.0",
+  "description": "CLI Bridge for Cowork sessions - enables sandboxed VMs to delegate commands to host-side Claude CLI",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "shellcheck scripts/*.sh skills/cli-bridge/watcher.sh",
+    "lint:all": "find . -name '*.sh' -not -path './node_modules/*' | xargs shellcheck",
+    "validate:docker": "docker compose -f docker/docker-compose.yml config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/virtuosotravlr/cowork-bridge.git"
+  },
+  "keywords": [
+    "claude",
+    "cowork",
+    "cli",
+    "bridge",
+    "sandbox"
+  ],
+  "author": "Aaron Walker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/virtuosotravlr/cowork-bridge/issues"
+  },
+  "homepage": "https://github.com/virtuosotravlr/cowork-bridge#readme",
+  "devDependencies": {
+    "husky": "^9.0.0"
+  }
+}

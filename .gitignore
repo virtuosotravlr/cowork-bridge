@@ -16,6 +16,9 @@ article.md
 # Planning documents (internal coordination)
 .plans/
 
+# Node
+node_modules/
+
 # Logs
 *.log
 npm-debug.log*

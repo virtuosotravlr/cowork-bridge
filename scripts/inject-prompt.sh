@@ -50,10 +50,46 @@ usage() {
 
 find_latest_session() {
   find "$CLAUDE_SESSIONS" -type d -name "local_*" -maxdepth 3 2>/dev/null | while IFS= read -r dir; do
-    if [ -f "$dir/cowork_settings.json" ]; then
+    if [ -d "$dir/.claude" ]; then
       stat -f "%m %N" "$dir" 2>/dev/null || stat -c "%Y %n" "$dir" 2>/dev/null
     fi
   done | sort -rn | head -1 | cut -d' ' -f2-
+}
+
+prompt_paths() {
+  local SESSION_PATH="$1"
+  local SETTINGS_FILE="$SESSION_PATH/cowork_settings.json"
+  local META_FILE
+  META_FILE="$(dirname "$SESSION_PATH")/$(basename "$SESSION_PATH").json"
+  echo "$SETTINGS_FILE" "$META_FILE"
+}
+
+resolve_prompt_target() {
+  local SESSION_PATH="$1"
+  local SETTINGS_FILE
+  local META_FILE
+  read -r SETTINGS_FILE META_FILE <<< "$(prompt_paths "$SESSION_PATH")"
+
+  if [ -f "$SETTINGS_FILE" ]; then
+    if jq -e '.systemPrompt?' "$SETTINGS_FILE" >/dev/null 2>&1; then
+      echo "$SETTINGS_FILE"
+      return
+    fi
+  fi
+
+  if [ -f "$META_FILE" ]; then
+    if jq -e '.systemPrompt?' "$META_FILE" >/dev/null 2>&1; then
+      echo "$META_FILE"
+      return
+    fi
+  fi
+
+  if [ -f "$META_FILE" ]; then
+    echo "$META_FILE"
+    return
+  fi
+
+  echo "$SETTINGS_FILE"
 }
 
 get_prompt_file() {
@@ -104,25 +140,51 @@ list_presets() {
 
 backup_prompt() {
   local SESSION_PATH="$1"
-  local SETTINGS_FILE="$SESSION_PATH/cowork_settings.json"
-  local BACKUP_FILE="$SESSION_PATH/cowork_settings.json.original"
+  local SETTINGS_FILE
+  local META_FILE
+  read -r SETTINGS_FILE META_FILE <<< "$(prompt_paths "$SESSION_PATH")"
 
-  if [ ! -f "$BACKUP_FILE" ]; then
-    cp "$SETTINGS_FILE" "$BACKUP_FILE"
-    echo -e "${GREEN}✓${NC} Backed up original prompt to cowork_settings.json.original"
+  local TARGET
+  TARGET=$(resolve_prompt_target "$SESSION_PATH")
+
+  if [ -f "$TARGET" ]; then
+    local BACKUP_FILE="${TARGET}.original"
+    local TS_BACKUP
+    TS_BACKUP="${TARGET}.backup.$(date +%Y%m%d-%H%M%S)"
+    if [ ! -f "$BACKUP_FILE" ]; then
+      cp "$TARGET" "$BACKUP_FILE"
+      echo -e "${GREEN}✓${NC} Backed up original prompt to: $BACKUP_FILE"
+    else
+      echo -e "${YELLOW}!${NC} Backup already exists, skipping: $BACKUP_FILE"
+    fi
+    cp "$TARGET" "$TS_BACKUP"
+    echo -e "${GREEN}✓${NC} Timestamped backup: $TS_BACKUP"
   else
-    echo -e "${YELLOW}!${NC} Backup already exists, skipping"
+    echo -e "${YELLOW}!${NC} Target file not found for backup: $TARGET"
   fi
 }
 
 restore_prompt() {
   local SESSION_PATH="$1"
-  local SETTINGS_FILE="$SESSION_PATH/cowork_settings.json"
-  local BACKUP_FILE="$SESSION_PATH/cowork_settings.json.original"
+  local SETTINGS_FILE
+  local META_FILE
+  read -r SETTINGS_FILE META_FILE <<< "$(prompt_paths "$SESSION_PATH")"
+
+  local TARGET
+  TARGET=$(resolve_prompt_target "$SESSION_PATH")
+  local BACKUP_FILE="${TARGET}.original"
 
   if [ -f "$BACKUP_FILE" ]; then
-    cp "$BACKUP_FILE" "$SETTINGS_FILE"
+    cp "$BACKUP_FILE" "$TARGET"
     echo -e "${GREEN}✓${NC} Restored original prompt"
+    return
+  fi
+
+  local LATEST_BACKUP
+  LATEST_BACKUP=$(find "$(dirname "$TARGET")" -maxdepth 1 -name "$(basename "$TARGET").backup.*" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+  if [ -n "$LATEST_BACKUP" ]; then
+    cp "$LATEST_BACKUP" "$TARGET"
+    echo -e "${GREEN}✓${NC} Restored prompt from: $LATEST_BACKUP"
   else
     echo -e "${RED}✗${NC} No backup found at $BACKUP_FILE"
     exit 1
@@ -131,16 +193,17 @@ restore_prompt() {
 
 show_prompt() {
   local SESSION_PATH="$1"
-  local SETTINGS_FILE="$SESSION_PATH/cowork_settings.json"
+  local SETTINGS_FILE
+  SETTINGS_FILE=$(resolve_prompt_target "$SESSION_PATH")
 
   if [ -f "$SETTINGS_FILE" ]; then
     echo "Current prompt (first 2000 chars):"
     echo "─────────────────────────────────────"
-    jq -r '.systemPrompt' "$SETTINGS_FILE" 2>/dev/null | head -c 2000
+    jq -r '.systemPrompt // empty' "$SETTINGS_FILE" 2>/dev/null | head -c 2000
     echo ""
     echo "─────────────────────────────────────"
     local TOTAL
-    TOTAL=$(jq -r '.systemPrompt | length' "$SETTINGS_FILE" 2>/dev/null)
+    TOTAL=$(jq -r '(.systemPrompt // "") | length' "$SETTINGS_FILE" 2>/dev/null)
     echo "Total length: $TOTAL characters"
   else
     echo -e "${RED}✗${NC} No settings file found"
@@ -152,7 +215,8 @@ inject_prompt() {
   local PROMPT_FILE="$2"
   local DRY_RUN="${3:-false}"
 
-  local SETTINGS_FILE="$SESSION_PATH/cowork_settings.json"
+  local SETTINGS_FILE
+  SETTINGS_FILE=$(resolve_prompt_target "$SESSION_PATH")
 
   if [ ! -f "$PROMPT_FILE" ]; then
     echo -e "${RED}✗${NC} Prompt file not found: $PROMPT_FILE"
@@ -176,6 +240,13 @@ inject_prompt() {
     echo "$NEW_PROMPT" | head -c 1000
     echo "..."
     return
+  fi
+
+  if [ -f "$SETTINGS_FILE" ]; then
+    if ! jq -e '.' "$SETTINGS_FILE" >/dev/null 2>&1; then
+      echo -e "${RED}✗${NC} Target file has invalid JSON: $SETTINGS_FILE"
+      exit 1
+    fi
   fi
 
   # Read existing settings (if any)
@@ -288,9 +359,14 @@ if [ -z "$PROMPT_FILE" ]; then
 fi
 
 # Backup if requested
-if [ "$DO_BACKUP" = "true" ]; then
-  backup_prompt "$SESSION_PATH"
-fi
+  if [ "$DO_BACKUP" = "true" ]; then
+    backup_prompt "$SESSION_PATH"
+  fi
 
-# Inject
-inject_prompt "$SESSION_PATH" "$PROMPT_FILE" "$DRY_RUN"
+  if [ "$DO_BACKUP" != "true" ] && [ "$DRY_RUN" != "true" ]; then
+    echo -e "${YELLOW}!${NC} No backup requested. Creating a safety backup."
+    backup_prompt "$SESSION_PATH"
+  fi
+
+  # Inject
+  inject_prompt "$SESSION_PATH" "$PROMPT_FILE" "$DRY_RUN"

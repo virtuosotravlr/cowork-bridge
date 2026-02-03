@@ -10,7 +10,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
 CLAUDE_DIR="$HOME/.claude"
+CLAUDE_APP_DIR="$HOME/Library/Application Support/Claude"
 SKILLS_DIR="$CLAUDE_DIR/skills"
+GLOBAL_SKILLS_DIR="$CLAUDE_APP_DIR/skills"
+GLOBAL_MANIFEST="$CLAUDE_APP_DIR/manifest.json"
 BIN_DIR="$HOME/.local/bin"
 LAUNCHD_DIR="$HOME/Library/LaunchAgents"
 
@@ -88,10 +91,12 @@ echo ""
 echo "Creating directories..."
 mkdir -p "$SKILLS_DIR/cli-bridge"
 mkdir -p "$SKILLS_DIR/cowork-bridge"
+mkdir -p "$GLOBAL_SKILLS_DIR"
 mkdir -p "$BIN_DIR"
 mkdir -p "$LAUNCHD_DIR"
 echo "  ✓ $SKILLS_DIR/cli-bridge"
 echo "  ✓ $SKILLS_DIR/cowork-bridge"
+echo "  ✓ $GLOBAL_SKILLS_DIR"
 echo "  ✓ $BIN_DIR"
 echo ""
 
@@ -103,6 +108,8 @@ cp "$REPO_DIR/skills/cowork-bridge/SKILL.md" "$SKILLS_DIR/cowork-bridge/"
 chmod +x "$SKILLS_DIR/cli-bridge/watcher.sh"
 echo "  ✓ cli-bridge skill + watcher"
 echo "  ✓ cowork-bridge skill"
+cp -r "$REPO_DIR/skills/cowork-bridge" "$GLOBAL_SKILLS_DIR/" 2>/dev/null || true
+echo "  ✓ cowork-bridge skill -> Claude skills"
 echo ""
 
 # Copy scripts to bin
@@ -138,6 +145,46 @@ echo "  ✓ power-user-prompt.json"
 echo "  ✓ cli-mode-prompt.json"
 echo "  ✓ minimal-prompt.json"
 echo "  ✓ unrestricted-prompt.json"
+echo ""
+
+update_manifest() {
+  local MANIFEST_FILE="$1"
+  local NOW
+  local NOW_MS
+  NOW=$(date -Iseconds)
+  NOW_MS=$(date +%s000)
+
+  local ENTRY='{
+    "skillId": "cowork-bridge",
+    "name": "cowork-bridge",
+    "description": "**CLI Bridge**: Enables sandboxed Cowork sessions to delegate commands to an unrestricted host-side Claude CLI.\n  - MANDATORY TRIGGERS: bridge, delegate, host, unrestricted, sandbox escape\n",
+    "creatorType": "user",
+    "enabled": true
+  }'
+
+  if [ ! -f "$MANIFEST_FILE" ]; then
+    jq -n --argjson skill "$ENTRY" --argjson now "$NOW_MS" --arg updated "$NOW" '
+      {lastUpdated: $now, skills: [$skill | .updatedAt = $updated]}
+    ' > "$MANIFEST_FILE"
+    return
+  fi
+
+  if jq -e '.skills // [] | .[] | select(.skillId == "cowork-bridge")' "$MANIFEST_FILE" >/dev/null 2>&1; then
+    jq --argjson now "$NOW_MS" --arg updated "$NOW" '
+      .lastUpdated = $now |
+      .skills = ((.skills // []) | map(if .skillId == "cowork-bridge" then .updatedAt = $updated else . end))
+    ' "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
+  else
+    jq --argjson now "$NOW_MS" --arg updated "$NOW" --argjson skill "$ENTRY" '
+      .lastUpdated = $now |
+      .skills = ((.skills // []) + [$skill | .updatedAt = $updated])
+    ' "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
+  fi
+}
+
+echo "Updating Claude skills manifest..."
+update_manifest "$GLOBAL_MANIFEST"
+echo "  ✓ Updated Claude manifest.json"
 echo ""
 
 # Check PATH

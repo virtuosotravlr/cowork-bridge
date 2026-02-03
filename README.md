@@ -92,13 +92,40 @@ cowork-bridge-init
 
 ## Local UI
 
-A lightweight HTMX-style UI is included for monitoring sessions, jobs, streams, and logs.
+A lightweight, real-time web dashboard for monitoring and managing Cowork Bridge sessions. The UI provides session discovery, job queue tracking, stream log viewing, manual request testing, and complete session configuration management.
+
+![Sessions Dashboard](docs/images/ui-sessions.png)
+
+**Key Features:**
+- Real-time monitoring of all active sessions
+- Job queue visualization with request/response details
+- Manual request creation and testing
+- Session configuration tools (prompts, models, MCP tools, paths)
+- Global maintenance operations (setup/uninstall across all sessions)
+- Daemon and watcher process control
+- Stream log viewing for debugging
+
+**Quick Start:**
 
 ```bash
 scripts/bridge-ui.sh
+# Open http://127.0.0.1:8787
 ```
 
-See `docs/ui.md` for options.
+**Common Options:**
+
+```bash
+# Docker mode with direct bridge folder
+scripts/bridge-ui.sh --bridgeDir /bridge
+
+# Enable token authentication
+scripts/bridge-ui.sh --token my-secret
+
+# Custom port
+scripts/bridge-ui.sh --port 8080
+```
+
+See `docs/ui.md` for full documentation including all pages, API endpoints, workflows, and troubleshooting.
 
 ## Security
 

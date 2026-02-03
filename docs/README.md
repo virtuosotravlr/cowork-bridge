@@ -4,7 +4,7 @@ Start here:
 - `docs/quickstart.md` - get running fast (Docker or local)
 - `docs/usage.md` - request types, streaming, examples
 - `docs/architecture.md` - diagram, folders, paths
-- `docs/ui.md` - local HTMX-style UI
+- `docs/ui.md` - web dashboard for monitoring sessions, jobs, and maintenance
 
 Reference:
 - `docs/protocol-spec.md` - full request/response spec

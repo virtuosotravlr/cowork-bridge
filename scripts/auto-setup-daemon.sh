@@ -6,15 +6,17 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(dirname "$SCRIPT_DIR")"
 CLAUDE_BASE="$HOME/Library/Application Support/Claude"
 CLAUDE_SESSIONS="$CLAUDE_BASE/local-agent-mode-sessions"
-SKILLS_PLUGIN_DIR="$CLAUDE_BASE/skills-plugin"
 LOG_PREFIX="[auto-setup]"
 POLL_INTERVAL=2
 KNOWN_SESSIONS_FILE="$HOME/.claude/.bridge-known-sessions"
 
 # Skills source (installed to ~/.claude/skills/ by install.sh)
 COWORK_SKILL_SOURCE="$HOME/.claude/skills/cowork-bridge"
+COWORK_SKILL_FALLBACK="$REPO_DIR/skills/cowork-bridge"
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # Logging
@@ -49,20 +51,58 @@ update_manifest() {
   NOW=$(date -Iseconds)
   NOW_MS=$(date +%s000)
 
+  if [ ! -f "$MANIFEST_FILE" ]; then
+    jq -n --argjson skill "$COWORK_BRIDGE_SKILL_ENTRY" --argjson now "$NOW_MS" --arg updated "$NOW" '
+      {lastUpdated: $now, skills: [$skill | .updatedAt = $updated]}
+    ' > "$MANIFEST_FILE"
+    return
+  fi
+
   # Check if cowork-bridge already exists in manifest
-  if jq -e '.skills[] | select(.skillId == "cowork-bridge")' "$MANIFEST_FILE" > /dev/null 2>&1; then
+  if jq -e '.skills // [] | .[] | select(.skillId == "cowork-bridge")' "$MANIFEST_FILE" > /dev/null 2>&1; then
     # Update existing entry
     jq --argjson now "$NOW_MS" --arg updated "$NOW" '
       .lastUpdated = $now |
-      .skills = [.skills[] | if .skillId == "cowork-bridge" then .updatedAt = $updated else . end]
+      .skills = ((.skills // []) | map(if .skillId == "cowork-bridge" then .updatedAt = $updated else . end))
     ' "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
   else
     # Add new entry
     jq --argjson now "$NOW_MS" --arg updated "$NOW" --argjson skill "$COWORK_BRIDGE_SKILL_ENTRY" '
       .lastUpdated = $now |
-      .skills += [$skill | .updatedAt = $updated]
+      .skills = ((.skills // []) + [$skill | .updatedAt = $updated])
     ' "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
   fi
+}
+
+get_plugin_base() {
+  local SESSION_PATH="$1"
+  local SESSION_DIR
+  local INNER_ID
+  local OUTER_ID
+  SESSION_DIR="$(dirname "$SESSION_PATH")"
+  INNER_ID="$(basename "$SESSION_DIR")"
+  OUTER_ID="$(basename "$(dirname "$SESSION_DIR")")"
+
+  local BASE_PRIMARY="$CLAUDE_BASE/local-agent-mode-sessions/skills-plugin/$INNER_ID/$OUTER_ID"
+  local BASE_SECONDARY="$CLAUDE_BASE/local-agent-mode-sessions/skills-plugin/$OUTER_ID/$INNER_ID"
+  local BASE_LEGACY="$CLAUDE_BASE/skills-plugin/$OUTER_ID/$INNER_ID/.claude-plugin"
+
+  if [ -d "$BASE_PRIMARY" ]; then
+    echo "$BASE_PRIMARY"
+    return
+  fi
+
+  if [ -d "$BASE_SECONDARY" ]; then
+    echo "$BASE_SECONDARY"
+    return
+  fi
+
+  if [ -d "$BASE_LEGACY" ]; then
+    echo "$BASE_LEGACY"
+    return
+  fi
+
+  echo "$BASE_PRIMARY"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -93,40 +133,23 @@ setup_session() {
 }
 EOF
 
-  # Extract workspace and account IDs from session path
-  # Path format: .../local-agent-mode-sessions/<account-id>/<workspace-id>/local_<session-id>
-  local WORKSPACE_ID
-  local ACCOUNT_ID
-  WORKSPACE_ID=$(basename "$(dirname "$SESSION_PATH")")
-  ACCOUNT_ID=$(basename "$(dirname "$(dirname "$SESSION_PATH")")")
-
-  # Inject cowork-bridge skill into skills-plugin directory
-  local PLUGIN_BASE="$SKILLS_PLUGIN_DIR/$WORKSPACE_ID/$ACCOUNT_ID/.claude-plugin"
+  local PLUGIN_BASE
+  PLUGIN_BASE=$(get_plugin_base "$SESSION_PATH")
   local SKILL_TARGET="$PLUGIN_BASE/skills/cowork-bridge"
   local MANIFEST_FILE="$PLUGIN_BASE/manifest.json"
 
   if [ -d "$COWORK_SKILL_SOURCE" ]; then
     mkdir -p "$SKILL_TARGET"
     cp -r "$COWORK_SKILL_SOURCE"/* "$SKILL_TARGET/"
-    log_info "  ✓ Injected cowork-bridge skill to skills-plugin"
-
-    # Update manifest.json
-    if [ -f "$MANIFEST_FILE" ]; then
-      update_manifest "$MANIFEST_FILE"
-      log_info "  ✓ Updated manifest.json"
-    fi
-  elif [ -f "$COWORK_SKILL_SOURCE/SKILL.md" ]; then
+    log_info "  ✓ Installed cowork-bridge skill to skills-plugin"
+    update_manifest "$MANIFEST_FILE"
+  elif [ -d "$COWORK_SKILL_FALLBACK" ]; then
     mkdir -p "$SKILL_TARGET"
-    cp "$COWORK_SKILL_SOURCE/SKILL.md" "$SKILL_TARGET/"
-    log_info "  ✓ Injected cowork-bridge skill to skills-plugin"
-
-    # Update manifest.json
-    if [ -f "$MANIFEST_FILE" ]; then
-      update_manifest "$MANIFEST_FILE"
-      log_info "  ✓ Updated manifest.json"
-    fi
+    cp -r "$COWORK_SKILL_FALLBACK"/* "$SKILL_TARGET/"
+    log_info "  ✓ Installed cowork-bridge skill to skills-plugin (repo source)"
+    update_manifest "$MANIFEST_FILE"
   else
-    log_warn "  ! Skill source not found at $COWORK_SKILL_SOURCE"
+    log_warn "  ! Skill source not found at $COWORK_SKILL_SOURCE or $COWORK_SKILL_FALLBACK"
   fi
 
   # Set up default env vars if settings.json doesn't exist
@@ -197,6 +220,8 @@ watch_loop() {
   # Initialize known sessions file
   mkdir -p "$(dirname "$KNOWN_SESSIONS_FILE")"
   touch "$KNOWN_SESSIONS_FILE"
+
+  # No-op: per-session skills are installed during setup_session
 
   while true; do
     # Find all sessions

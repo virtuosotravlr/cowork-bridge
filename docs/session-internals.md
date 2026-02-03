@@ -52,11 +52,34 @@ Changes apply on the next Cowork message.
 
 ## Skills plugin path
 
-Skills are registered under:
+Skills are registered under the per-session skills-plugin directory:
+
+```
+~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/
+  <inner-id>/<outer-id>/skills/
+```
+
+`<inner-id>` is the last directory before `local_<session-id>` in your session path, and `<outer-id>` is the directory above it. For example, if your session path is:
+
+```
+.../local-agent-mode-sessions/4994e1cf.../006c112f.../local_<session-id>
+```
+
+then the skills-plugin path is:
+
+```
+.../local-agent-mode-sessions/skills-plugin/006c112f.../4994e1cf.../skills
+```
+
+Manifest file (same folder):
+
+```
+manifest.json
+```
+
+Legacy location (older installs):
 
 ```
 ~/Library/Application Support/Claude/skills-plugin/
-  <workspace-id>/<account-id>/.claude-plugin/
+  <outer-id>/<inner-id>/.claude-plugin/
 ```
-
-Note the order: workspace id, then account id.

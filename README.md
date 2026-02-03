@@ -90,6 +90,16 @@ cowork-bridge-init
 
 3) For advanced request types, streaming, and manual testing, see the docs.
 
+## Local UI
+
+A lightweight HTMX-style UI is included for monitoring sessions, jobs, streams, and logs.
+
+```bash
+scripts/bridge-ui.sh
+```
+
+See `docs/ui.md` for options.
+
 ## Security
 
 This bridge can execute arbitrary commands on your host. Use a dedicated machine or user, and review allowed/blocked settings. See `docs/security.md` for details.

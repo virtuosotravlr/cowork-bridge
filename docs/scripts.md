@@ -40,3 +40,8 @@ The installer copies scripts into `~/.local/bin` with friendly names. You can al
 
 - `skills/cli-bridge/watcher.sh`
   - Main host-side daemon that processes requests
+
+## UI
+
+- `scripts/bridge-ui.sh`
+  - Local HTMX-style dashboard for sessions and jobs

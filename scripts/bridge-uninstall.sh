@@ -8,7 +8,6 @@ set -euo pipefail
 
 CLAUDE_BASE="$HOME/Library/Application Support/Claude"
 CLAUDE_SESSIONS="$CLAUDE_BASE/local-agent-mode-sessions"
-SKILLS_PLUGIN_DIR="$CLAUDE_BASE/skills-plugin"
 KNOWN_SESSIONS_FILE="$HOME/.claude/.bridge-known-sessions"
 
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -21,15 +20,46 @@ remove_from_manifest() {
   NOW_MS=$(date +%s000)
 
   if [ -f "$MANIFEST_FILE" ]; then
-    if jq -e '.skills[] | select(.skillId == "cowork-bridge")' "$MANIFEST_FILE" > /dev/null 2>&1; then
+    if jq -e '.skills // [] | .[] | select(.skillId == "cowork-bridge")' "$MANIFEST_FILE" > /dev/null 2>&1; then
       jq --argjson now "$NOW_MS" '
         .lastUpdated = $now |
-        .skills = [.skills[] | select(.skillId != "cowork-bridge")]
+        .skills = ((.skills // []) | map(select(.skillId != "cowork-bridge")))
       ' "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
       return 0
     fi
   fi
   return 1
+}
+
+get_plugin_base() {
+  local SESSION_PATH="$1"
+  local SESSION_DIR
+  local INNER_ID
+  local OUTER_ID
+  SESSION_DIR="$(dirname "$SESSION_PATH")"
+  INNER_ID="$(basename "$SESSION_DIR")"
+  OUTER_ID="$(basename "$(dirname "$SESSION_DIR")")"
+
+  local BASE_PRIMARY="$CLAUDE_BASE/local-agent-mode-sessions/skills-plugin/$INNER_ID/$OUTER_ID"
+  local BASE_SECONDARY="$CLAUDE_BASE/local-agent-mode-sessions/skills-plugin/$OUTER_ID/$INNER_ID"
+  local BASE_LEGACY="$CLAUDE_BASE/skills-plugin/$OUTER_ID/$INNER_ID/.claude-plugin"
+
+  if [ -d "$BASE_PRIMARY" ]; then
+    echo "$BASE_PRIMARY"
+    return
+  fi
+
+  if [ -d "$BASE_SECONDARY" ]; then
+    echo "$BASE_SECONDARY"
+    return
+  fi
+
+  if [ -d "$BASE_LEGACY" ]; then
+    echo "$BASE_LEGACY"
+    return
+  fi
+
+  echo "$BASE_PRIMARY"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -67,12 +97,8 @@ uninstall_session() {
   local BRIDGE_DIR="$SESSION_PATH/outputs/.bridge"
   local SETTINGS_FILE="$SESSION_PATH/.claude/settings.json"
 
-  # Extract workspace and account IDs from session path
-  local WORKSPACE_ID
-  local ACCOUNT_ID
-  WORKSPACE_ID=$(basename "$(dirname "$SESSION_PATH")")
-  ACCOUNT_ID=$(basename "$(dirname "$(dirname "$SESSION_PATH")")")
-  local PLUGIN_BASE="$SKILLS_PLUGIN_DIR/$WORKSPACE_ID/$ACCOUNT_ID/.claude-plugin"
+  local PLUGIN_BASE
+  PLUGIN_BASE=$(get_plugin_base "$SESSION_PATH")
   local SKILL_PLUGIN_DIR="$PLUGIN_BASE/skills/cowork-bridge"
   local MANIFEST_FILE="$PLUGIN_BASE/manifest.json"
 
@@ -185,6 +211,8 @@ uninstall_global() {
       echo "✓ Removed cowork-bridge skill"
     fi
   fi
+
+  # Per-session plugin cleanup is handled by --all or per-session uninstall.
 
   # Remove CLI tools
   local BIN_DIR="$HOME/.local/bin"

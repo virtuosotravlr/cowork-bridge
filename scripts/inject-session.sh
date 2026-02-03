@@ -90,11 +90,11 @@ cmd_show() {
   MODEL=$(jq -r '.model // "unknown"' "$CONFIG")
   TITLE=$(jq -r '.title // "untitled"' "$CONFIG")
   ARCHIVED=$(jq -r '.isArchived // false' "$CONFIG")
-  FOLDERS=$(jq -r '.userSelectedFolders | length' "$CONFIG")
-  APPROVED=$(jq -r '.userApprovedFileAccessPaths | length' "$CONFIG")
-  TOOLS=$(jq -r '.enabledMcpTools | keys | length' "$CONFIG")
-  COMMANDS=$(jq -r '.slashCommands | length' "$CONFIG")
-  PROMPT_LEN=$(jq -r '.systemPrompt | length' "$CONFIG")
+  FOLDERS=$(jq -r '(.userSelectedFolders // []) | length' "$CONFIG")
+  APPROVED=$(jq -r '(.userApprovedFileAccessPaths // []) | length' "$CONFIG")
+  TOOLS=$(jq -r '(.enabledMcpTools // {}) | keys | length' "$CONFIG")
+  COMMANDS=$(jq -r '(.slashCommands // []) | length' "$CONFIG")
+  PROMPT_LEN=$(jq -r '(.systemPrompt // "") | length' "$CONFIG")
 
   echo -e "${GREEN}Model:${NC}          $MODEL"
   echo -e "${GREEN}Title:${NC}          $TITLE"
@@ -109,7 +109,7 @@ cmd_show() {
   # Show mounted folders if any
   if [ "$FOLDERS" -gt 0 ]; then
     echo -e "${CYAN}Mounted Folders:${NC}"
-    jq -r '.userSelectedFolders[]' "$CONFIG" | while IFS= read -r f; do
+    jq -r '(.userSelectedFolders // [])[]' "$CONFIG" | while IFS= read -r f; do
       echo "  - $f"
     done
     echo ""
@@ -118,7 +118,7 @@ cmd_show() {
   # Show approved paths if any
   if [ "$APPROVED" -gt 0 ]; then
     echo -e "${CYAN}Pre-approved Paths:${NC}"
-    jq -r '.userApprovedFileAccessPaths[]' "$CONFIG" | head -5 | while IFS= read -r f; do
+    jq -r '(.userApprovedFileAccessPaths // [])[]' "$CONFIG" | head -5 | while IFS= read -r f; do
       echo "  - $f"
     done
     [ "$APPROVED" -gt 5 ] && echo "  ... and $((APPROVED - 5)) more"
@@ -209,12 +209,12 @@ cmd_approve_path() {
   fi
 
   # Check if already exists
-  if jq -e --arg p "$PATH_TO_ADD" '.userApprovedFileAccessPaths | index($p)' "$CONFIG" > /dev/null 2>&1; then
+  if jq -e --arg p "$PATH_TO_ADD" '(.userApprovedFileAccessPaths // []) | index($p)' "$CONFIG" > /dev/null 2>&1; then
     echo -e "${YELLOW}Already approved:${NC} $PATH_TO_ADD"
     return
   fi
 
-  jq --arg p "$PATH_TO_ADD" '.userApprovedFileAccessPaths += [$p]' "$CONFIG" > "${CONFIG}.tmp"
+  jq --arg p "$PATH_TO_ADD" '.userApprovedFileAccessPaths = ((.userApprovedFileAccessPaths // []) + [$p])' "$CONFIG" > "${CONFIG}.tmp"
   mv "${CONFIG}.tmp" "$CONFIG"
 
   echo -e "${GREEN}✓${NC} Pre-approved path: $PATH_TO_ADD"
@@ -239,12 +239,12 @@ cmd_mount() {
   fi
 
   # Check if already mounted
-  if jq -e --arg f "$FOLDER" '.userSelectedFolders | index($f)' "$CONFIG" > /dev/null 2>&1; then
+  if jq -e --arg f "$FOLDER" '(.userSelectedFolders // []) | index($f)' "$CONFIG" > /dev/null 2>&1; then
     echo -e "${YELLOW}Already mounted:${NC} $FOLDER"
     return
   fi
 
-  jq --arg f "$FOLDER" '.userSelectedFolders += [$f]' "$CONFIG" > "${CONFIG}.tmp"
+  jq --arg f "$FOLDER" '.userSelectedFolders = ((.userSelectedFolders // []) + [$f])' "$CONFIG" > "${CONFIG}.tmp"
   mv "${CONFIG}.tmp" "$CONFIG"
 
   echo -e "${GREEN}✓${NC} Pre-mounted folder: $FOLDER"
@@ -257,7 +257,7 @@ cmd_list_tools() {
   echo -e "${CYAN}Enabled MCP Tools:${NC}"
   echo ""
 
-  jq -r '.enabledMcpTools | to_entries[] | "\(.value)\t\(.key)"' "$CONFIG" | while IFS=$'\t' read -r enabled hash; do
+  jq -r '(.enabledMcpTools // {}) | to_entries[] | "\(.value)\t\(.key)"' "$CONFIG" | while IFS=$'\t' read -r enabled hash; do
     if [ "$enabled" = "true" ]; then
       echo -e "  ${GREEN}✓${NC} $hash"
     else
@@ -267,8 +267,8 @@ cmd_list_tools() {
 
   echo ""
   local TOTAL ENABLED
-  TOTAL=$(jq '.enabledMcpTools | length' "$CONFIG")
-  ENABLED=$(jq '.enabledMcpTools | to_entries | map(select(.value == true)) | length' "$CONFIG")
+  TOTAL=$(jq '(.enabledMcpTools // {}) | length' "$CONFIG")
+  ENABLED=$(jq '(.enabledMcpTools // {}) | to_entries | map(select(.value == true)) | length' "$CONFIG")
   echo "Total: $ENABLED enabled / $TOTAL configured"
 }
 
@@ -283,7 +283,7 @@ cmd_toggle_tool() {
     return
   fi
 
-  jq --arg h "$HASH" --argjson e "$ENABLE" '.enabledMcpTools[$h] = $e' "$CONFIG" > "${CONFIG}.tmp"
+  jq --arg h "$HASH" --argjson e "$ENABLE" '.enabledMcpTools = ((.enabledMcpTools // {}) + {($h): $e})' "$CONFIG" > "${CONFIG}.tmp"
   mv "${CONFIG}.tmp" "$CONFIG"
 
   if [ "$ENABLE" = "true" ]; then
